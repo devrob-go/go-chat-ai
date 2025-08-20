@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chat-service.fullname" . }}
+  labels:
+    {{- include "chat-service.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.chatService.autoscaling.enabled }}
+  replicas: {{ .Values.chatService.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "chat-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "chat-service.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- if .Values.chatService.podAnnotations }}
+        {{- toYaml .Values.chatService.podAnnotations | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "chat-service.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.chatService.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.chatService.containerSecurityContext | nindent 12 }}
+          image: "{{ .Values.chatService.image.repository }}:{{ .Values.chatService.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.chatService.image.pullPolicy }}
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.chatService.service.grpcPort }}
+              protocol: TCP
+            - name: rest
+              containerPort: {{ .Values.chatService.service.restPort }}
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              value: {{ .Values.chatService.config.environment | quote }}
+            - name: APP_PORT
+              value: {{ .Values.chatService.service.grpcPort | quote }}
+            - name: REST_PORT
+              value: {{ .Values.chatService.service.restPort | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.chatService.config.logLevel | quote }}
+            - name: LOG_JSON_FORMAT
+              value: {{ .Values.chatService.config.logJsonFormat | quote }}
+            - name: TLS_ENABLED
+              value: {{ .Values.chatService.config.tlsEnabled | quote }}
+            - name: AUTH_SERVICE_HOST
+              value: {{ .Values.chatService.config.authService.host | quote }}
+            - name: AUTH_SERVICE_PORT
+              value: {{ .Values.chatService.config.authService.port | quote }}
+            - name: AUTH_SERVICE_TLS
+              value: {{ .Values.chatService.config.authService.tls | quote }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-openai
+                  key: api-key
+            - name: OPENAI_MODEL
+              value: {{ .Values.chatService.config.openai.model | quote }}
+            - name: OPENAI_MAX_TOKENS
+              value: {{ .Values.chatService.config.openai.maxTokens | quote }}
+            - name: OPENAI_TEMPERATURE
+              value: {{ .Values.chatService.config.openai.temperature | quote }}
+            - name: OPENAI_TIMEOUT
+              value: {{ .Values.chatService.config.openai.timeout | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.chatService.config.database.user | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.chatService.config.database.password | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.chatService.config.database.name | quote }}
+            - name: POSTGRES_HOST
+              value: {{ .Values.chatService.config.database.host | quote }}
+            - name: POSTGRES_PORT
+              value: {{ .Values.chatService.config.database.port | quote }}
+            - name: DB_SSL_MODE
+              value: {{ .Values.chatService.config.database.sslMode | quote }}
+            - name: DB_MAX_CONNECTIONS
+              value: {{ .Values.chatService.config.database.maxConnections | quote }}
+            - name: DB_MAX_IDLE_CONNECTIONS
+              value: {{ .Values.chatService.config.database.maxIdleConnections | quote }}
+            - name: DB_CONNECTION_TIMEOUT
+              value: {{ .Values.chatService.config.database.connectionTimeout | quote }}
+            - name: RATE_LIMIT_ENABLED
+              value: {{ .Values.chatService.config.rateLimit.enabled | quote }}
+            - name: RATE_LIMIT_REQUESTS
+              value: {{ .Values.chatService.config.rateLimit.requests | quote }}
+            - name: RATE_LIMIT_WINDOW
+              value: {{ .Values.chatService.config.rateLimit.window | quote }}
+            - name: SECURITY_HEADERS_ENABLED
+              value: {{ .Values.chatService.config.securityHeaders.enabled | quote }}
+            - name: HSTS_MAX_AGE
+              value: {{ .Values.chatService.config.securityHeaders.hstsMaxAge | quote }}
+            - name: CONTENT_SECURITY_POLICY
+              value: {{ .Values.chatService.config.securityHeaders.contentSecurityPolicy | quote }}
+            - name: LOG_SENSITIVE_DATA
+              value: {{ .Values.chatService.config.loggingSecurity.sensitiveData | quote }}
+            - name: LOG_REQUEST_HEADERS
+              value: {{ .Values.chatService.config.loggingSecurity.requestHeaders | quote }}
+            - name: LOG_RESPONSE_BODY
+              value: {{ .Values.chatService.config.loggingSecurity.responseBody | quote }}
+            - name: HEALTH_CHECK_TIMEOUT
+              value: {{ .Values.chatService.config.timeouts.healthCheck | quote }}
+            - name: SERVER_READ_TIMEOUT
+              value: {{ .Values.chatService.config.timeouts.read | quote }}
+            - name: SERVER_WRITE_TIMEOUT
+              value: {{ .Values.chatService.config.timeouts.write | quote }}
+            - name: MIN_TLS_VERSION
+              value: {{ .Values.chatService.config.minTlsVersion | quote }}
+            - name: MAX_TLS_VERSION
+              value: {{ .Values.chatService.config.maxTlsVersion | quote }}
+          resources:
+            {{- toYaml .Values.chatService.resources | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.chatService.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.chatService.readinessProbe | nindent 12 }}
+          startupProbe:
+            {{- toYaml .Values.chatService.startupProbe | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.chatService.config.tlsEnabled }}
+            - name: tls-certs
+              mountPath: /etc/tls
+              readOnly: true
+            {{- end }}
+            {{- if .Values.chatService.config.authService.tls }}
+            - name: auth-service-certs
+              mountPath: /etc/auth-service
+              readOnly: true
+            {{- end }}
+      volumes:
+        {{- if .Values.chatService.config.tlsEnabled }}
+        - name: tls-certs
+          secret:
+            secretName: {{ include "chat-service.fullname" . }}-tls
+        {{- end }}
+        {{- if .Values.chatService.config.authService.tls }}
+        - name: auth-service-certs
+          secret:
+            secretName: {{ include "chat-service.fullname" . }}-auth-service
+        {{- end }}
+      {{- with .Values.chatService.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.chatService.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.chatService.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,57 @@
+{{- if .Values.chatService.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "chat-service.fullname" . }}
+  labels:
+    {{- include "chat-service.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "chat-service.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+    - Egress
+  {{- if .Values.chatService.networkPolicy.ingressRules }}
+  ingress:
+    {{- toYaml .Values.chatService.networkPolicy.ingressRules | nindent 4 }}
+  {{- else }}
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: {{ .Release.Namespace }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "chat-service.name" . }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.chatService.service.grpcPort }}
+        - protocol: TCP
+          port: {{ .Values.chatService.service.restPort }}
+  {{- end }}
+  {{- if .Values.chatService.networkPolicy.egressRules }}
+  egress:
+    {{- toYaml .Values.chatService.networkPolicy.egressRules | nindent 4 }}
+  {{- else }}
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: {{ .Release.Namespace }}
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "chat-service.name" . }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.chatService.service.grpcPort }}
+        - protocol: TCP
+          port: {{ .Values.chatService.service.restPort }}
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+  {{- end }}
+{{- end }}
