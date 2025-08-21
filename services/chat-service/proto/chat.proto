@@ -1,0 +1,145 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "chat-service/proto";
+
+import "google/protobuf/timestamp.proto";
+import "proto/google/api/annotations.proto";
+
+// Message represents a chat message
+message Message {
+  string id = 1;
+  string user_id = 2;
+  string content = 3;
+  string role = 4; // "user", "assistant", "system"
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+// ChatRequest represents a request to send a message
+message ChatRequest {
+  string message = 1;
+  string conversation_id = 2;
+}
+
+// ChatResponse represents a response from the chat
+message ChatResponse {
+  Message message = 1;
+  string conversation_id = 2;
+  bool is_ai_response = 3;
+}
+
+// StreamMessageRequest represents a request to stream messages
+message StreamMessageRequest {
+  string conversation_id = 1;
+}
+
+// StreamMessageResponse represents a streamed message response
+message StreamMessageResponse {
+  Message message = 1;
+  bool is_end = 2;
+}
+
+// GetHistoryRequest represents a request to get chat history
+message GetHistoryRequest {
+  string conversation_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+// GetHistoryResponse represents a response with chat history
+message GetHistoryResponse {
+  repeated Message messages = 1;
+  int32 total = 2;
+  string conversation_id = 3;
+}
+
+// ChatWithAIRequest represents a request to chat with OpenAI
+message ChatWithAIRequest {
+  string message = 1;
+  string conversation_id = 2;
+  string model = 3; // OpenAI model to use
+  float temperature = 4;
+  int32 max_tokens = 5;
+}
+
+// ChatWithAIResponse represents a response from OpenAI
+message ChatWithAIResponse {
+  string ai_message = 1;
+  string conversation_id = 2;
+  string model_used = 3;
+  int32 tokens_used = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+// Conversation represents a chat conversation
+message Conversation {
+  string id = 1;
+  string title = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+// ListConversationsRequest represents a request to list conversations
+message ListConversationsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+// ListConversationsResponse represents a response with conversations
+message ListConversationsResponse {
+  repeated Conversation conversations = 1;
+  int32 total = 2;
+}
+
+// Empty represents an empty response
+message Empty {}
+
+// ChatService provides chat functionality
+service ChatService {
+  // Send a message
+  rpc SendMessage(ChatRequest) returns (ChatResponse) {
+    option (google.api.http) = {
+      post: "/v1/chat/message"
+      body: "*"
+    };
+  }
+  
+  // Stream messages for real-time chat
+  rpc StreamMessages(StreamMessageRequest) returns (stream StreamMessageResponse) {
+    option (google.api.http) = {
+      get: "/v1/chat/stream/{conversation_id}"
+    };
+  }
+  
+  // Get chat history
+  rpc GetHistory(GetHistoryRequest) returns (GetHistoryResponse) {
+    option (google.api.http) = {
+      get: "/v1/chat/history/{conversation_id}"
+    };
+  }
+  
+  // Chat with OpenAI AI
+  rpc ChatWithAI(ChatWithAIRequest) returns (ChatWithAIResponse) {
+    option (google.api.http) = {
+      post: "/v1/chat/ai"
+      body: "*"
+    };
+  }
+  
+  // List user conversations
+  rpc ListConversations(ListConversationsRequest) returns (ListConversationsResponse) {
+    option (google.api.http) = {
+      get: "/v1/chat/conversations"
+    };
+  }
+  
+  // Create new conversation
+  rpc CreateConversation(Conversation) returns (Conversation) {
+    option (google.api.http) = {
+      post: "/v1/chat/conversations"
+      body: "*"
+    };
+  }
+}
