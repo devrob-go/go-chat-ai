@@ -29,14 +29,18 @@ COPY . .
 # Download dependencies
 RUN cd services/auth-service && go mod download
 
-# Generate protobuf code
-RUN cd services/auth-service && protoc --go_out=. --go_opt=paths=source_relative \
-    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-    --grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative \
-    proto/auth.proto proto/health.proto
+# Generate protobuf code from the root directory where proto files are located
+RUN protoc --proto_path=. --proto_path=api/common \
+    --go_out=api/auth/v1/proto --go_opt=paths=source_relative \
+    --go-grpc_out=api/auth/v1/proto --go-grpc_opt=paths=source_relative \
+    api/auth/v1/proto/auth.proto api/auth/v1/proto/health.proto
+
+# Create proto directory in auth-service and copy generated files
+RUN mkdir -p services/auth-service/proto && \
+    cp api/auth/v1/proto/*.go services/auth-service/proto/
 
 # Build the application
-RUN cd services/auth-service && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN cd services/auth-service/cmd/server && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
 # Final stage
 FROM alpine:latest
@@ -48,10 +52,10 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy the binary from builder stage
-COPY --from=builder /app/services/auth-service/main .
+COPY --from=builder /app/services/auth-service/cmd/server/main .
 
 # Copy migrations directory
-COPY --from=builder /app/services/auth-service/storage/migrations ./storage/migrations
+COPY --from=builder /app/services/auth-service/internal/repository/migrations ./storage/migrations
 
 # Expose both gRPC and REST ports
 EXPOSE 8080 8081

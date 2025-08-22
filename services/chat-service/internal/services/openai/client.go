@@ -101,7 +101,7 @@ func (c *client) ChatCompletion(ctx context.Context, messages []Message, model s
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 
-	c.logger.Debug(ctx, "Sending request to OpenAI", map[string]interface{}{
+	c.logger.Debug(ctx, "Sending request to OpenAI", map[string]any{
 		"model":       model,
 		"temperature": temperature,
 		"max_tokens":  maxTokens,
@@ -129,7 +129,7 @@ func (c *client) ChatCompletion(ctx context.Context, messages []Message, model s
 		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	c.logger.Debug(ctx, "Received response from OpenAI", map[string]interface{}{
+	c.logger.Debug(ctx, "Received response from OpenAI", map[string]any{
 		"model":        response.Model,
 		"total_tokens": response.Usage.TotalTokens,
 		"choices":      len(response.Choices),

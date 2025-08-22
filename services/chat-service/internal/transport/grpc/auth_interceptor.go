@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"auth-service/proto"
+	"api/auth/v1/proto"
 	"chat-service/configs"
 	zlog "packages/logger"
 
@@ -79,7 +79,7 @@ func NewAuthInterceptor(logger *zlog.Logger, config *configs.Config) (*AuthInter
 
 // UnaryAuthInterceptor intercepts unary gRPC calls for authentication
 func (i *AuthInterceptor) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		// Skip authentication for health checks
 		if info.FullMethod == "/health.Health/Check" || info.FullMethod == "/health.Health/Watch" {
 			return handler(ctx, req)
@@ -88,7 +88,7 @@ func (i *AuthInterceptor) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 		// Extract token from metadata
 		token, err := i.extractToken(ctx)
 		if err != nil {
-			i.logger.Warn(ctx, "Failed to extract token", map[string]interface{}{
+			i.logger.Warn(ctx, "Failed to extract token", map[string]any{
 				"method": info.FullMethod,
 				"error":  err.Error(),
 			})
@@ -98,7 +98,7 @@ func (i *AuthInterceptor) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 		// Validate token with auth service
 		userID, err := i.validateToken(ctx, token)
 		if err != nil {
-			i.logger.Warn(ctx, "Token validation failed", map[string]interface{}{
+			i.logger.Warn(ctx, "Token validation failed", map[string]any{
 				"method": info.FullMethod,
 				"error":  err.Error(),
 			})
@@ -108,7 +108,7 @@ func (i *AuthInterceptor) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 		// Add user ID to context
 		ctx = context.WithValue(ctx, "user_id", userID)
 
-		i.logger.Debug(ctx, "Authentication successful", map[string]interface{}{
+		i.logger.Debug(ctx, "Authentication successful", map[string]any{
 			"method":  info.FullMethod,
 			"user_id": userID,
 		})
@@ -119,7 +119,7 @@ func (i *AuthInterceptor) UnaryAuthInterceptor() grpc.UnaryServerInterceptor {
 
 // StreamAuthInterceptor intercepts streaming gRPC calls for authentication
 func (i *AuthInterceptor) StreamAuthInterceptor() grpc.StreamServerInterceptor {
-	return func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		// Skip authentication for health checks
 		if info.FullMethod == "/health.Health/Check" || info.FullMethod == "/health.Health/Watch" {
 			return handler(srv, stream)
@@ -130,7 +130,7 @@ func (i *AuthInterceptor) StreamAuthInterceptor() grpc.StreamServerInterceptor {
 		// Extract token from metadata
 		token, err := i.extractToken(ctx)
 		if err != nil {
-			i.logger.Warn(ctx, "Failed to extract token", map[string]interface{}{
+			i.logger.Warn(ctx, "Failed to extract token", map[string]any{
 				"method": info.FullMethod,
 				"error":  err.Error(),
 			})
@@ -140,7 +140,7 @@ func (i *AuthInterceptor) StreamAuthInterceptor() grpc.StreamServerInterceptor {
 		// Validate token with auth service
 		userID, err := i.validateToken(ctx, token)
 		if err != nil {
-			i.logger.Warn(ctx, "Token validation failed", map[string]interface{}{
+			i.logger.Warn(ctx, "Token validation failed", map[string]any{
 				"method": info.FullMethod,
 				"error":  err.Error(),
 			})
@@ -156,7 +156,7 @@ func (i *AuthInterceptor) StreamAuthInterceptor() grpc.StreamServerInterceptor {
 			ctx:          newCtx,
 		}
 
-		i.logger.Debug(ctx, "Authentication successful for stream", map[string]interface{}{
+		i.logger.Debug(ctx, "Authentication successful for stream", map[string]any{
 			"method":  info.FullMethod,
 			"user_id": userID,
 		})

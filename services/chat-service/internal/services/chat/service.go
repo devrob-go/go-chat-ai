@@ -40,7 +40,7 @@ func NewService(openaiClient openai.Client, logger *zlog.Logger, config *configs
 
 // SendMessage sends a message and stores it
 func (s *service) SendMessage(ctx context.Context, req *domain.ChatRequest) (*domain.ChatResponse, error) {
-	s.logger.Info(ctx, "Sending message", map[string]interface{}{
+	s.logger.Info(ctx, "Sending message", map[string]any{
 		"user_id":         req.UserID,
 		"conversation_id": req.ConversationID,
 		"message_length":  len(req.Message),
@@ -85,7 +85,7 @@ func (s *service) SendMessage(ctx context.Context, req *domain.ChatRequest) (*do
 		IsAIResponse:   false,
 	}
 
-	s.logger.Info(ctx, "Message sent successfully", map[string]interface{}{
+	s.logger.Info(ctx, "Message sent successfully", map[string]any{
 		"message_id":      message.ID,
 		"conversation_id": conversationID,
 	})
@@ -95,7 +95,7 @@ func (s *service) SendMessage(ctx context.Context, req *domain.ChatRequest) (*do
 
 // GetHistory retrieves chat history for a conversation
 func (s *service) GetHistory(ctx context.Context, req *domain.GetHistoryRequest) (*domain.GetHistoryResponse, error) {
-	s.logger.Info(ctx, "Getting chat history", map[string]interface{}{
+	s.logger.Info(ctx, "Getting chat history", map[string]any{
 		"user_id":         req.UserID,
 		"conversation_id": req.ConversationID,
 		"limit":           req.Limit,
@@ -126,7 +126,7 @@ func (s *service) GetHistory(ctx context.Context, req *domain.GetHistoryRequest)
 		ConversationID: req.ConversationID,
 	}
 
-	s.logger.Info(ctx, "Chat history retrieved", map[string]interface{}{
+	s.logger.Info(ctx, "Chat history retrieved", map[string]any{
 		"conversation_id": req.ConversationID,
 		"total_messages":  total,
 	})
@@ -136,7 +136,7 @@ func (s *service) GetHistory(ctx context.Context, req *domain.GetHistoryRequest)
 
 // ListConversations lists user conversations
 func (s *service) ListConversations(ctx context.Context, req *domain.ListConversationsRequest) (*domain.ListConversationsResponse, error) {
-	s.logger.Info(ctx, "Listing conversations", map[string]interface{}{
+	s.logger.Info(ctx, "Listing conversations", map[string]any{
 		"user_id": req.UserID,
 		"limit":   req.Limit,
 		"offset":  req.Offset,
@@ -165,7 +165,7 @@ func (s *service) ListConversations(ctx context.Context, req *domain.ListConvers
 		Total:         total,
 	}
 
-	s.logger.Info(ctx, "Conversations listed", map[string]interface{}{
+	s.logger.Info(ctx, "Conversations listed", map[string]any{
 		"user_id":             req.UserID,
 		"total_conversations": total,
 	})
@@ -175,7 +175,7 @@ func (s *service) ListConversations(ctx context.Context, req *domain.ListConvers
 
 // CreateConversation creates a new conversation
 func (s *service) CreateConversation(ctx context.Context, userID, title string) (*domain.Conversation, error) {
-	s.logger.Info(ctx, "Creating conversation", map[string]interface{}{
+	s.logger.Info(ctx, "Creating conversation", map[string]any{
 		"user_id": userID,
 		"title":   title,
 	})
@@ -188,7 +188,7 @@ func (s *service) CreateConversation(ctx context.Context, userID, title string) 
 		return nil, fmt.Errorf("failed to store conversation: %w", err)
 	}
 
-	s.logger.Info(ctx, "Conversation created successfully", map[string]interface{}{
+	s.logger.Info(ctx, "Conversation created successfully", map[string]any{
 		"conversation_id": conversation.ID,
 		"user_id":         userID,
 	})
@@ -198,7 +198,7 @@ func (s *service) CreateConversation(ctx context.Context, userID, title string) 
 
 // ChatWithAI sends a message to OpenAI and returns the AI response
 func (s *service) ChatWithAI(ctx context.Context, userID, message, conversationID, model string, temperature float64, maxTokens int) (*domain.ChatResponse, error) {
-	s.logger.Info(ctx, "Chatting with AI", map[string]interface{}{
+	s.logger.Info(ctx, "Chatting with AI", map[string]any{
 		"user_id":         userID,
 		"conversation_id": conversationID,
 		"model":           model,
@@ -258,7 +258,7 @@ func (s *service) ChatWithAI(ctx context.Context, userID, message, conversationI
 		IsAIResponse:   true,
 	}
 
-	s.logger.Info(ctx, "AI chat completed successfully", map[string]interface{}{
+	s.logger.Info(ctx, "AI chat completed successfully", map[string]any{
 		"conversation_id": conversationID,
 		"tokens_used":     aiResponse.GetTotalTokens(),
 		"model_used":      aiResponse.Model,

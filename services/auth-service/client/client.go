@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"auth-service/proto"
+	"api/auth/v1/proto"
 	zlog "packages/logger"
 
 	"google.golang.org/grpc"

@@ -29,11 +29,11 @@ COPY . .
 # Download dependencies
 RUN cd services/chat-service && go mod download
 
-# Generate protobuf code
-RUN cd services/chat-service && protoc --go_out=. --go_opt=paths=source_relative \
-    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-    --grpc-gateway_out=. --grpc-gateway_opt=paths=source_relative \
-    proto/chat.proto
+# Generate protobuf code from the root directory where proto files are located
+RUN protoc --proto_path=. --proto_path=api/common \
+    --go_out=api/chat/v1 --go_opt=paths=source_relative \
+    --go-grpc_out=api/chat/v1 --go-grpc_opt=paths=source_relative \
+    api/chat/v1/chat.proto
 
 # Build the application
 RUN cd services/chat-service && CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .

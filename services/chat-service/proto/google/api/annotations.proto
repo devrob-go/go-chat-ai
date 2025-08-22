@@ -23,7 +23,7 @@ option java_package = "com.google.api";
 option objc_class_prefix = "GAPI";
 
 import "google/protobuf/descriptor.proto";
-import "proto/google/api/http.proto";
+import "google/api/http.proto";
 
 extend google.protobuf.MethodOptions {
   // See `HttpRule`.

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"auth-service/server"
+	"auth-service/internal/transport/server"
 
 	_ "github.com/lib/pq"
 )

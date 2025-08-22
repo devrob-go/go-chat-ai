@@ -5,7 +5,7 @@ package chat;
 option go_package = "chat-service/proto";
 
 import "google/protobuf/timestamp.proto";
-import "proto/google/api/annotations.proto";
+import "google/api/annotations.proto";
 
 // Message represents a chat message
 message Message {

@@ -166,7 +166,7 @@ import (
     "context"
     "log"
     
-    "auth-service/proto"
+    "api/auth/v1/proto"
     "google.golang.org/grpc"
     "google.golang.org/grpc/credentials/insecure"
     "google.golang.org/grpc/metadata"
@@ -288,6 +288,7 @@ make run
 Database migrations are automatically applied on startup:
 
 ```bash
+
 # Manual migration
 goose -dir storage/migrations postgres "host=localhost user=postgres dbname=starter_db sslmode=disable" up
 ```

@@ -44,7 +44,7 @@ func (h *ChatHandler) SendMessage(ctx context.Context, req *proto.ChatRequest) (
 		return nil, status.Errorf(codes.InvalidArgument, "user_id cannot be empty")
 	}
 
-	h.logger.Info(ctx, "Handling SendMessage request", map[string]interface{}{
+	h.logger.Info(ctx, "Handling SendMessage request", map[string]any{
 		"user_id":         userID,
 		"conversation_id": req.ConversationId,
 		"message_length":  len(req.Message),
@@ -77,7 +77,7 @@ func (h *ChatHandler) SendMessage(ctx context.Context, req *proto.ChatRequest) (
 		IsAiResponse:   response.IsAIResponse,
 	}
 
-	h.logger.Info(ctx, "Message sent successfully", map[string]interface{}{
+	h.logger.Info(ctx, "Message sent successfully", map[string]any{
 		"message_id":      response.Message.ID,
 		"conversation_id": response.ConversationID,
 	})
@@ -96,7 +96,7 @@ func (h *ChatHandler) StreamMessages(req *proto.StreamMessageRequest, stream pro
 		return status.Errorf(codes.Internal, "authentication error")
 	}
 
-	h.logger.Info(ctx, "Handling StreamMessages request", map[string]interface{}{
+	h.logger.Info(ctx, "Handling StreamMessages request", map[string]any{
 		"user_id":         userID,
 		"conversation_id": req.ConversationId,
 	})
@@ -134,7 +134,7 @@ func (h *ChatHandler) StreamMessages(req *proto.StreamMessageRequest, stream pro
 		return status.Errorf(codes.Internal, "failed to send end message: %v", err)
 	}
 
-	h.logger.Info(ctx, "Stream messages completed", map[string]interface{}{
+	h.logger.Info(ctx, "Stream messages completed", map[string]any{
 		"conversation_id": req.ConversationId,
 	})
 
@@ -150,7 +150,7 @@ func (h *ChatHandler) GetHistory(ctx context.Context, req *proto.GetHistoryReque
 		return nil, status.Errorf(codes.Internal, "authentication error")
 	}
 
-	h.logger.Info(ctx, "Handling GetHistory request", map[string]interface{}{
+	h.logger.Info(ctx, "Handling GetHistory request", map[string]any{
 		"user_id":         userID,
 		"conversation_id": req.ConversationId,
 		"limit":           req.Limit,
@@ -184,7 +184,7 @@ func (h *ChatHandler) GetHistory(ctx context.Context, req *proto.GetHistoryReque
 		ConversationId: response.ConversationID,
 	}
 
-	h.logger.Info(ctx, "Chat history retrieved", map[string]interface{}{
+	h.logger.Info(ctx, "Chat history retrieved", map[string]any{
 		"conversation_id": response.ConversationID,
 		"total_messages":  response.Total,
 	})
@@ -201,7 +201,7 @@ func (h *ChatHandler) ChatWithAI(ctx context.Context, req *proto.ChatWithAIReque
 		return nil, status.Errorf(codes.Internal, "authentication error")
 	}
 
-	h.logger.Info(ctx, "Handling ChatWithAI request", map[string]interface{}{
+	h.logger.Info(ctx, "Handling ChatWithAI request", map[string]any{
 		"user_id":         userID,
 		"conversation_id": req.ConversationId,
 		"model":           req.Model,
@@ -233,7 +233,7 @@ func (h *ChatHandler) ChatWithAI(ctx context.Context, req *proto.ChatWithAIReque
 		CreatedAt:      timestamppb.Now(),
 	}
 
-	h.logger.Info(ctx, "AI chat completed successfully", map[string]interface{}{
+	h.logger.Info(ctx, "AI chat completed successfully", map[string]any{
 		"conversation_id": response.ConversationID,
 		"model_used":      req.Model,
 	})
@@ -250,7 +250,7 @@ func (h *ChatHandler) ListConversations(ctx context.Context, req *proto.ListConv
 		return nil, status.Errorf(codes.Internal, "authentication error")
 	}
 
-	h.logger.Info(ctx, "Handling ListConversations request", map[string]interface{}{
+	h.logger.Info(ctx, "Handling ListConversations request", map[string]any{
 		"user_id": userID,
 		"limit":   req.Limit,
 		"offset":  req.Offset,
@@ -281,7 +281,7 @@ func (h *ChatHandler) ListConversations(ctx context.Context, req *proto.ListConv
 		Total:         int32(response.Total),
 	}
 
-	h.logger.Info(ctx, "Conversations listed", map[string]interface{}{
+	h.logger.Info(ctx, "Conversations listed", map[string]any{
 		"user_id":             userID,
 		"total_conversations": response.Total,
 	})
@@ -298,7 +298,7 @@ func (h *ChatHandler) CreateConversation(ctx context.Context, req *proto.Convers
 		return nil, status.Errorf(codes.Internal, "authentication error")
 	}
 
-	h.logger.Info(ctx, "Handling CreateConversation request", map[string]interface{}{
+	h.logger.Info(ctx, "Handling CreateConversation request", map[string]any{
 		"user_id": userID,
 		"title":   req.Title,
 	})
@@ -313,7 +313,7 @@ func (h *ChatHandler) CreateConversation(ctx context.Context, req *proto.Convers
 	// Convert domain response to proto response
 	protoResponse := h.convertConversationToProto(conversation)
 
-	h.logger.Info(ctx, "Conversation created successfully", map[string]interface{}{
+	h.logger.Info(ctx, "Conversation created successfully", map[string]any{
 		"conversation_id": conversation.ID,
 		"user_id":         conversation.UserID,
 	})

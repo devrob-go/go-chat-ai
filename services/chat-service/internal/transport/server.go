@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	authproto "auth-service/proto"
+	authproto "api/auth/v1/proto"
 	"chat-service/configs"
 	"chat-service/internal/domain"
 	"chat-service/internal/services/chat"
@@ -252,8 +252,8 @@ func handleSendMessage(w http.ResponseWriter, r *http.Request, chatService chat.
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
+		"message": map[string]any{
 			"id":         response.Message.ID,
 			"user_id":    response.Message.UserID,
 			"content":    response.Message.Content,
@@ -335,7 +335,7 @@ func handleChatWithAI(w http.ResponseWriter, r *http.Request, chatService chat.S
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
 		"ai_message":      response.Message.Content,
 		"conversation_id": response.ConversationID,
 		"model_used":      req.Model,
@@ -403,9 +403,9 @@ func handleListConversations(w http.ResponseWriter, r *http.Request, chatService
 	}
 
 	// Convert to response format
-	conversations := make([]map[string]interface{}, len(response.Conversations))
+	conversations := make([]map[string]any, len(response.Conversations))
 	for i, conv := range response.Conversations {
-		conversations[i] = map[string]interface{}{
+		conversations[i] = map[string]any{
 			"id":         conv.ID,
 			"user_id":    conv.UserID,
 			"title":      conv.Title,
@@ -417,7 +417,7 @@ func handleListConversations(w http.ResponseWriter, r *http.Request, chatService
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
 		"conversations": conversations,
 		"total":         response.Total,
 	})
@@ -467,7 +467,7 @@ func handleCreateConversation(w http.ResponseWriter, r *http.Request, chatServic
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
 		"id":         conversation.ID,
 		"user_id":    conversation.UserID,
 		"title":      conversation.Title,
@@ -543,9 +543,9 @@ func handleGetHistory(w http.ResponseWriter, r *http.Request, chatService chat.S
 	}
 
 	// Convert to response format
-	messages := make([]map[string]interface{}, len(response.Messages))
+	messages := make([]map[string]any, len(response.Messages))
 	for i, msg := range response.Messages {
-		messages[i] = map[string]interface{}{
+		messages[i] = map[string]any{
 			"id":         msg.ID,
 			"user_id":    msg.UserID,
 			"content":    msg.Content,
@@ -558,7 +558,7 @@ func handleGetHistory(w http.ResponseWriter, r *http.Request, chatService chat.S
 	// Return response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]any{
 		"messages":        messages,
 		"total":           response.Total,
 		"conversation_id": response.ConversationID,
@@ -669,7 +669,7 @@ func NewServer(ctx context.Context) (*Server, error) {
 			return nil, fmt.Errorf("failed to create TLS listener: %w", err)
 		}
 
-		logger.Info(ctx, "TLS enabled for gRPC server", map[string]interface{}{
+		logger.Info(ctx, "TLS enabled for gRPC server", map[string]any{
 			"port": cfg.ChatServicePort,
 		})
 	} else {
@@ -679,7 +679,7 @@ func NewServer(ctx context.Context) (*Server, error) {
 			return nil, fmt.Errorf("failed to create listener: %w", err)
 		}
 
-		logger.Info(ctx, "TLS disabled for gRPC server", map[string]interface{}{
+		logger.Info(ctx, "TLS disabled for gRPC server", map[string]any{
 			"port": cfg.ChatServicePort,
 		})
 	}
@@ -707,7 +707,7 @@ func NewServer(ctx context.Context) (*Server, error) {
 func (s *Server) Run(ctx context.Context) error {
 	// Start gRPC server in a goroutine
 	go func() {
-		s.logger.Info(ctx, "Starting gRPC server", map[string]interface{}{
+		s.logger.Info(ctx, "Starting gRPC server", map[string]any{
 			"port": s.config.ChatServicePort,
 		})
 
@@ -718,7 +718,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	// Start REST server in a goroutine
 	go func() {
-		s.logger.Info(ctx, "Starting REST server", map[string]interface{}{
+		s.logger.Info(ctx, "Starting REST server", map[string]any{
 			"port": s.config.RestGatewayPort,
 		})
 
@@ -747,7 +747,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// Close auth interceptor
 	if s.authInterceptor != nil {
 		if err := s.authInterceptor.Close(); err != nil {
-			s.logger.Warn(ctx, "Failed to close auth interceptor", map[string]interface{}{
+			s.logger.Warn(ctx, "Failed to close auth interceptor", map[string]any{
 				"error": err.Error(),
 			})
 		}
@@ -756,7 +756,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// Close database connection
 	if s.db != nil {
 		if err := s.db.Close(ctx); err != nil {
-			s.logger.Warn(ctx, "Failed to close database connection", map[string]interface{}{
+			s.logger.Warn(ctx, "Failed to close database connection", map[string]any{
 				"error": err.Error(),
 			})
 		}
@@ -781,7 +781,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	// Close listeners
 	if s.grpcLis != nil {
 		if err := s.grpcLis.Close(); err != nil {
-			s.logger.Warn(ctx, "Failed to close gRPC listener", map[string]interface{}{
+			s.logger.Warn(ctx, "Failed to close gRPC listener", map[string]any{
 				"error": err.Error(),
 			})
 		}
@@ -789,7 +789,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 	if s.restLis != nil {
 		if err := s.restLis.Close(); err != nil {
-			s.logger.Warn(ctx, "Failed to close REST listener", map[string]interface{}{
+			s.logger.Warn(ctx, "Failed to close REST listener", map[string]any{
 				"error": err.Error(),
 			})
 		}
