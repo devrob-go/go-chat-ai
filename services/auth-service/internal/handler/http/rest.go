@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"sync"
 	"time"
 
 	"api/auth/v1/proto"
@@ -36,7 +35,6 @@ type RESTGateway struct {
 	grpcAddr    string
 	tlsEnabled  bool
 	tlsConfig   any
-	mu          sync.RWMutex
 }
 
 // NewRESTGateway creates a new REST gateway instance
@@ -633,36 +631,6 @@ func (g *RESTGateway) joinStrings(strs []string, sep string) string {
 		result += sep + str
 	}
 	return result
-}
-
-// Start starts the REST gateway server
-func (g *RESTGateway) Start() error {
-	if g.server == nil {
-		return fmt.Errorf("gateway not initialized")
-	}
-
-	// Start periodic connection health checks
-	go g.startConnectionHealthMonitor()
-
-	return g.server.Serve(g.listener)
-}
-
-// startConnectionHealthMonitor starts a periodic health check for gRPC connections
-func (g *RESTGateway) startConnectionHealthMonitor() {
-	ticker := time.NewTicker(30 * time.Second) // Check every 30 seconds
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			if healthy := g.checkGRPCConnectionHealth(); !healthy {
-				g.logger.Warn(context.Background(), "gRPC connection health check failed", map[string]any{
-					"grpc_addr": g.grpcAddr,
-					"tls":       g.tlsEnabled,
-				})
-			}
-		}
-	}
 }
 
 // Stop stops the REST gateway server
