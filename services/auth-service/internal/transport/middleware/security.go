@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"auth-service/config"
+	"auth-service/internal/services"
 
 	zlog "packages/logger"
 
@@ -22,15 +23,17 @@ import (
 
 // SecurityMiddleware provides comprehensive security features
 type SecurityMiddleware struct {
-	logger *zlog.Logger
-	config *config.Config
+	logger  *zlog.Logger
+	config  *config.Config
+	service *services.Service
 }
 
 // NewSecurityMiddleware creates a new security middleware
-func NewSecurityMiddleware(logger *zlog.Logger, cfg *config.Config) *SecurityMiddleware {
+func NewSecurityMiddleware(logger *zlog.Logger, cfg *config.Config, service *services.Service) *SecurityMiddleware {
 	return &SecurityMiddleware{
-		logger: logger,
-		config: cfg,
+		logger:  logger,
+		config:  cfg,
+		service: service,
 	}
 }
 
@@ -123,8 +126,9 @@ func (s *secureServerStream) Context() context.Context {
 func (s *SecurityMiddleware) isProtectedMethod(method string) bool {
 	protectedMethods := []string{
 		"/auth.AuthService/SignOut",
-		"/auth.AuthService/Refresh",
-		"/auth.AuthService/Revoke",
+		"/auth.AuthService/RefreshToken",
+		"/auth.AuthService/RevokeToken",
+		"/auth.AuthService/ListUsers",
 		// Add other protected methods here
 	}
 
@@ -180,9 +184,9 @@ func (s *SecurityMiddleware) authenticateRequest(ctx context.Context) error {
 	return nil
 }
 
-// validateJWTToken validates a JWT token
+// validateJWTToken validates a JWT token using the auth service
 func (s *SecurityMiddleware) validateJWTToken(token string) error {
-	// Basic JWT validation - in production, use proper JWT library
+	// Basic format check first
 	if len(token) < 10 {
 		return fmt.Errorf("token too short")
 	}
@@ -193,8 +197,13 @@ func (s *SecurityMiddleware) validateJWTToken(token string) error {
 		return fmt.Errorf("invalid JWT format")
 	}
 
-	// TODO: Implement proper JWT validation with signature verification
-	// For now, just basic format validation
+	// Use the auth service to validate the token
+	ctx := context.Background()
+	_, err := s.service.Auth.ValidateToken(ctx, token, s.config.JWTAccessTokenSecret)
+	if err != nil {
+		return fmt.Errorf("token validation failed: %w", err)
+	}
+
 	return nil
 }
 

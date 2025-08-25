@@ -67,10 +67,30 @@ func NewDependencies(cfg *config.Config, logger *zlog.Logger, db *repository.DB,
 
 // SetupMiddleware configures all middleware in the correct order
 func (d *Dependencies) SetupMiddleware() {
-	// TODO: Add middleware setup logic here
-	// This will be implemented when the middleware functions are available
-	d.Logger.Info(context.Background(), "Middleware setup placeholder", map[string]any{
-		"message": "Middleware setup will be implemented in the next phase",
+	// Create and register middleware in the correct order
+
+	// 1. Recovery middleware (catches panics)
+	recoveryMiddleware := middleware.NewRecoveryMiddleware(d.Logger)
+	d.Middleware.AddUnary(recoveryMiddleware.UnaryRecoveryInterceptor())
+	d.Middleware.AddStream(recoveryMiddleware.StreamRecoveryInterceptor())
+
+	// 2. Metrics middleware (tracks performance)
+	metricsMiddleware := middleware.NewMetricsMiddleware(d.Logger)
+	d.Middleware.AddUnary(metricsMiddleware.UnaryMetricsInterceptor())
+	d.Middleware.AddStream(metricsMiddleware.StreamMetricsInterceptor())
+
+	// 3. Rate limiting middleware
+	rateLimitMiddleware := middleware.NewRateLimitMiddleware(d.Logger, d.Config)
+	d.Middleware.AddUnary(rateLimitMiddleware.UnaryRateLimitInterceptor())
+	d.Middleware.AddStream(rateLimitMiddleware.StreamRateLimitInterceptor())
+
+	// 4. Security middleware (authentication and authorization)
+	securityMiddleware := middleware.NewSecurityMiddleware(d.Logger, d.Config, d.Services)
+	d.Middleware.AddUnary(securityMiddleware.UnarySecurityInterceptor())
+	d.Middleware.AddStream(securityMiddleware.StreamSecurityInterceptor())
+
+	d.Logger.Info(context.Background(), "Middleware setup completed", map[string]any{
+		"middlewares": []string{"recovery", "metrics", "rate_limit", "security"},
 	})
 }
 
